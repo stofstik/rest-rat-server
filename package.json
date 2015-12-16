@@ -1,0 +1,12 @@
+{
+  "name": "rat-server",
+  "main": "server.js",
+
+  "dependencies" : {
+    "express"  : "latest",
+    "mongoose" : "latest",
+	"morgan"   : "latest",
+	"jade"	   : "latest"
+  }
+
+}
