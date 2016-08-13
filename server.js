@@ -18,6 +18,19 @@ var PORT_NUMBER = process.argv[2]; // to start: "node server.js [port]"
 
 app.use(morgan(':date[clf] :remote-addr :url'));
 
+/*
+ * A client is uploading a file
+ */
+
+app.post('/postFile/:clientId',
+    function(req, res) {
+        console.log(req.params.clientId);
+        // TODO import better fs thingy
+        // TODO ensure exists clientId dir
+        // TODO save file to dir
+        res.send("yolo");
+    });
+
 app.post('/handshake/:id/:version/:package/:ssid/:isAudioStarted/:isLocationStarted/:ftpServerStarted/:location',
     function(req, res) {
 
