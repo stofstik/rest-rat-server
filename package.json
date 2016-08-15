@@ -2,13 +2,17 @@
   "name": "rat-server",
   "main": "server.js",
   "scripts": {
-      "server": "nodemon ./server.js 3001 ./"
+    "server": "nodemon ./server.js 3001 ./"
   },
-  "dependencies" : {
-    "express"  : "latest",
-    "mongoose" : "latest",
-	"morgan"   : "latest",
-	"jade"	   : "latest"
+  "dependencies": {
+    "errorhandler": "^1.4.3",
+    "express": "^4.14.0",
+    "express-session": "^1.14.0",
+    "method-override": "^2.3.6",
+    "mongoose": "latest",
+    "morgan": "^1.7.0",
+    "multer": "^1.2.0",
+    "pug": "^2.0.0-beta5",
+    "serve-favicon": "^2.3.0"
   }
-
 }
