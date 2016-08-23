@@ -132,6 +132,10 @@ app.get('/connections', (req, res) => {
     res.send(JSON.stringify(connectionManager.connections, null, 4));
 });
 
+app.get('/serverStatus', (req, res) => {
+    res.send("Online...");
+});
+
 function Connection(clientId, isLocationStarted, isAudioStarted, isWifiConnected) {
     this.clientId          = clientId;
     this.lastSeen          = new Date().getTime();
