@@ -2,7 +2,8 @@
   "name": "rat-server",
   "main": "server.js",
   "scripts": {
-    "server": "nodemon ./server.js 3001 ./"
+    "dev": "nodemon ./server.js 3001 ./",
+    "server": "node ./server.js 3001 ./"
   },
   "dependencies": {
     "errorhandler": "^1.4.3",
