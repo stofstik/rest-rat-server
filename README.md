@@ -1,3 +1,3 @@
 # rest-rat-server
 
-File server for my Android RAT
+Control and file server for my Android RAT
